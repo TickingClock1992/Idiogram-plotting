@@ -20,7 +20,7 @@ data_2.txt
 
 Note, the Chr in data_1 and data_2 need to be filled with numbers. In this case, "X" in the karyotype file is changed to be 23 and "Y" in the karyotype file is changed to be 24 in both data file.
 
-If the number of chromosome of you species is less than 24, you can changed the number "170" in the line 35.
+If the number of chromosome of you species is less than 24, you can changed the number "170" in the line 30.
 
 10 chromosomes with the value "170" not changed
 

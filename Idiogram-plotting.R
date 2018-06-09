@@ -17,8 +17,6 @@ pathnameLength=attr(pathnameIndex[[1]],"match.length")
 whereFrom=substr(whereFrom,1,pathnameLength-1)
 setwd(whereFrom)
 
-# read the karyotype files (核型文件五列，第一列染色体，第二、三列染色体长度，第四、五列着丝粒位置)
-karyotype <- read.table("karyotype.txt", sep = "\t", header = T, stringsAsFactors = F, colClasses = c("character", "integer", "integer", "integer", "integer"))
 
 # A4 paper (210mm * 297mm)
 # left, right, top, bottom ---margins--- 20mm, 20mm, 25mm, 25mm (plot region: 170mm * 247mm)
@@ -26,15 +24,16 @@ karyotype <- read.table("karyotype.txt", sep = "\t", header = T, stringsAsFactor
 
 
 ### rect model: <rect x y rx ry width height style="fill:#fdcdac;stroke:black;stroke-width:2;opacity:0.5"/>
-# x,y 矩形左上角点的坐标； rx,ry 圆角矩形；width,height 矩形的宽和高（从左上角的点向右向下延伸）； fill 填充颜色；stroke 线的颜色；stroke-width 线的宽度；opacity 透明度
 
-# karyotype rect
+## karyotype rect
 
-# 170mm, n个染色体，每个染色体+空隙宽度为(170/n)mm，染色体与空隙等宽，染色体宽度[(170/n)/2]mm，换算成px
+chr_width <- (floor(170 / nrow(karyotype))/2) * 3.543307 
 
-chr_width <- (floor(170 / nrow(karyotype))/2) * 3.543307  # 170可以根据染色体条数适当调整，这里24条染色体设定的画布宽度为170mm，可以多试试几次，选择最合适的画布宽度
+# read the karyotype files
 
-#
+karyotype <- read.table("karyotype.txt", sep = "\t", header = T, stringsAsFactors = F, colClasses = c("character", "integer", "integer", "integer", "integer"))
+
+# rect
 
 for (i in 1:nrow(karyotype)) {
   karyotype[i, 6] <- 20 * 3.543307 + (i-1) * (chr_width * 2)
@@ -116,30 +115,26 @@ for (i in 1:nrow(karyotype)) {
 }
 names(karyotype)[21] <- "y8"
 
-
 karyotype$path = paste("<path d=\"M", karyotype$x1, ",", karyotype$y1, " A", chr_width/2, ",", chr_width/2, " 0 1,1 ", karyotype$x2, ",", karyotype$y2, " L", karyotype$x3, ",", karyotype$y3, " L", karyotype$x4, ",", karyotype$y4, " L", karyotype$x5, ",", karyotype$y5, " A", chr_width/2, ",", chr_width/2, " 0 0,0 ", karyotype$x6, ",", karyotype$y6, " L", karyotype$x7, ",", karyotype$y7, " L", karyotype$x8, ",", karyotype$y8, " Z" ,"\" style=\"fill:none; stroke:grey; stroke-width:1\"/>", sep = "")
 karyotype$text = paste("<text x=\"", (karyotype$x1 + karyotype$x6)/2 - nchar(karyotype$Chr) * 2.1, "\" y=\"", (150 + 25) * 3.543307 + 15, "\" font-size=\"9\" fill=\"black\" >", karyotype$Chr, "</text>", sep = "")
 
 
-# read the data_1 files (染色体上的barplot文件，四列，第一列染色体，第二、三列染色体上的位置，第四列对应的数值)
+## data_1
+
+# read the data_1 files
+
 data <- read.table("data_1.txt", sep = "\t", header = T, stringsAsFactors = F, colClasses = c("character", "integer", "integer", "integer"))
+
+# color set
+
 require(graphics)
 
-# 自带渐变色
-# color <- as.data.frame(topo.colors(max(data$Value), alpha = 1))
-# color <- as.data.frame(heat.colors(max(data$Value), alpha = 1))
-# color <- as.data.frame(cm.colors(max(data$Value), alpha = 1))
-# color <- as.data.frame(terrain.colors(max(data$Value), alpha = 1))
-# color <- as.data.frame(rainbow(max(data$Value), s = 1, v = 1, start = 0, end = max(1, max(data$Value) - 1)/max(data$Value), alpha = 1))
-
-# 手动设置渐变色（其中"#8dd3c7", "#ffffb3", "#fb8072"可以根据需要进行修改，注意同时修改下面的data1_legend）
 color <- as.data.frame(colorRampPalette(c("#8dd3c7", "#ffffb3", "#fb8072"))(max(data$Value)))
 
 for (i in 1:nrow(data)){
   data[i,5] <- substring(color[data[i,4], 1], 1, 7)
 }
 names(data)[5] <- "color"
-
 
 
 for (i in 1:nrow(data)){
@@ -344,7 +339,8 @@ names(data)[14] <- "rect"
 data1_legend <- as.data.frame(1:1000)
 names(data1_legend)[1] <- "Num"
 
-# 颜色与上面data1的设置保持一致
+# color set (same as the line 132)
+
 color_rect <- as.data.frame(colorRampPalette(c("#8dd3c7", "#ffffb3", "#fb8072"))(max(data1_legend[,1])))
 
 for (i in 1:nrow(data1_legend)){
@@ -371,8 +367,10 @@ legend1_text <- data.frame(paste("<text x=\"", data1_legend[1,3], "\" y=\"", dat
                            paste("<text x=\"", data1_legend[1000,3] - 25, "\" y=\"", data1_legend[1,4] + 8 * 3.543307 - 3, "\" font-size=\"12\" fill=\"black\" >High</text>", sep = "")
 )
 
+## data_2
 
-# read the data_2 files (染色体旁边的小图数据文件，六列，第一列名称，第二列形状（只支持box正方形、triangle三角形和circle圆），第四列染色体，第五、六列染色体上的位置，第七类颜色，注意同一类的type对应的颜色一致)
+# read the data_2 files
+
 data_interval <- read.table("data_2.txt", sep = "\t", header = T, stringsAsFactors = F, colClasses = c("character", "character", "integer", "integer", "integer", "character"))
 
 for (i in 1:nrow(data_interval)){
